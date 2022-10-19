@@ -8,12 +8,24 @@ from django.http import FileResponse, HttpResponse, JsonResponse
 # Create your views here.
 @csrf_exempt
 def getData(request):
-    with connection.cursor() as cursor_1:
-        cursor_1.execute("SELECT tempData FROM mydata ORDER BY ID DESC LIMIT 1")
-        row1 = cursor_1.fetchone()
-        result = []
-        keys = ("mydata")
-        result.append(dict(zip(keys, row1)))
-        json_data = json.dumps(result)
-        print(json_data)
-        return HttpResponse(json_data, content_type="application/json")
+    if request.method == 'GET':
+        status = "Enable"
+        with connection.cursor() as cursor_1:
+            cursor_1.execute("SELECT Command FROM car1 inner join carstatus on car1.DeviceId = carstatus.DeviceId where carstatus.status = '"+str(status) + "' ORDER BY Serial DESC LIMIT 1")
+            row1 = cursor_1.fetchone()
+            response_data = {}
+            response_data['result'] = row1[0]
+            json_data = json.dumps(response_data)
+            return HttpResponse(json_data, content_type="application/json")
+
+@csrf_exempt
+def writeData(request):
+    if request.method == 'POST':
+        command = request.POST.get("command", False)
+        deviceID =  request.POST.get("deviceID", False)
+        with connection.cursor() as cursor_1:
+            cursor_1.execute("INSERT INTO car1(DeviceId,Command) VALUES ('"+int(deviceID) + "','"+str(command) + "')")
+            connection.commit()
+          
+
+        return HttpResponse("", content_type="application/json")
